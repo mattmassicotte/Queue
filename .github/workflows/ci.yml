@@ -1,0 +1,26 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - '**'
+
+jobs:
+  test:
+    name: Test
+    runs-on: macOS-latest
+    strategy:
+      matrix:
+        destination:
+          - "platform=macOS"
+          - "platform=iOS Simulator,name=iPhone 12"
+          - "platform=tvOS Simulator,name=Apple TV"
+          - "platform=watchOS Simulator,name=Apple Watch Series 6 (40mm)"
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Test platform ${{ matrix.destination }}
+        run: set -o pipefail && xcodebuild -scheme Queue -destination "${{ matrix.destination }}" test | xcpretty
