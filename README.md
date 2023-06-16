@@ -20,7 +20,7 @@ queue.addOperation {
 
 // This can can also return the underlying Task,
 // so you can cancel, or await a value
-let task = await queue.addOperation {
+let task = queue.addOperation {
     return await makeValue()
 }
 
