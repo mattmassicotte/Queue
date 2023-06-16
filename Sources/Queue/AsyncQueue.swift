@@ -21,6 +21,12 @@ public final class AsyncQueue: @unchecked Sendable {
 		}
 	}
 
+	private struct QueueEntry {
+		let awaitable: any Awaitable
+		let isBarrier: Bool
+		let id: UUID
+	}
+
 	private struct ExecutionProperties {
 		let dependencies: [any Awaitable]
 		let isBarrier: Bool
@@ -28,8 +34,7 @@ public final class AsyncQueue: @unchecked Sendable {
 	}
 
 	private let lock = NSLock()
-	private var pendingTasks = [UUID: any Awaitable]()
-	private var barrierPending = false
+	private var pendingTasks = [UUID: QueueEntry]()
 	private let attributes: Attributes
 
 	public init(attributes: Attributes = []) {
@@ -43,10 +48,6 @@ public final class AsyncQueue: @unchecked Sendable {
 
 		precondition(pendingTasks[props.id] != nil)
 		pendingTasks[props.id] = nil
-
-		if props.isBarrier {
-			self.barrierPending = false
-		}
 	}
 
 	private func createTask<Success, Failure>(
@@ -58,29 +59,18 @@ public final class AsyncQueue: @unchecked Sendable {
 		lock.lock()
 		defer { lock.unlock() }
 
-		let mustWait = barrier || barrierPending
-
-		if barrier {
-			self.barrierPending = true
-		}
-
 		precondition(pendingTasks[id] == nil)
 
-		var values = [any Awaitable]()
+		// we have dependencies on all pending barrier tasks
+		let dependencies = pendingTasks.values.filter { $0.isBarrier }.map({ $0.awaitable })
 
-		if mustWait {
-			for (key, value) in pendingTasks {
-				if key != id {
-					values.append(value)
-				}
-			}
-		}
-
-		let props = ExecutionProperties(dependencies: values, isBarrier: barrier, id: id)
+		let props = ExecutionProperties(dependencies: dependencies, isBarrier: barrier, id: id)
 		let task = block(props)
 
+		let entry = QueueEntry(awaitable: task, isBarrier: barrier, id: id)
+
 		precondition(pendingTasks[id] == nil)
-		pendingTasks[id] = task
+		pendingTasks[id] = entry
 
 		return task
 	}
