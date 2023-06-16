@@ -27,18 +27,19 @@ public final class AsyncQueue: @unchecked Sendable {
 		let id: UUID
 	}
 
-	private let semaphore = DispatchSemaphore(value: 1)
+	private let lock = NSLock()
 	private var pendingTasks = [UUID: any Awaitable]()
 	private var barrierPending = false
 	private let attributes: Attributes
 
 	public init(attributes: Attributes = []) {
 		self.attributes = attributes
+		self.lock.name = "AsyncQueue"
 	}
 
 	private func completePendingTask(with props: ExecutionProperties) {
-		semaphore.wait()
-		defer { semaphore.signal() }
+		lock.lock()
+		defer { lock.unlock() }
 
 		precondition(pendingTasks[props.id] != nil)
 		pendingTasks[props.id] = nil
@@ -54,8 +55,8 @@ public final class AsyncQueue: @unchecked Sendable {
 	) -> Task<Success, Failure> {
 		let id = UUID()
 
-		semaphore.wait()
-		defer { semaphore.signal() }
+		lock.lock()
+		defer { lock.unlock() }
 
 		let mustWait = barrier || barrierPending
 
