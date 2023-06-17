@@ -8,10 +8,14 @@ on:
     branches:
       - '**'
 
+# Need at least this SDK
+env:
+  DEVELOPER_DIR: /Applications/Xcode_14.3.app/Contents/Developer
+
 jobs:
   test:
     name: Test
-    runs-on: macOS-latest
+    runs-on: macOS-13
     strategy:
       matrix:
         destination:
