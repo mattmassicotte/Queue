@@ -67,17 +67,18 @@ final class QueueTests: XCTestCase {
 		XCTAssertEqual(value, "B")
 	}
 
-	func testConcurrentQueue() async {
+	func testConcurrentTasksRunCanOutOfOrder() async {
 		let queue = AsyncQueue(attributes: [.concurrent])
 
 		let expA = expectation(description: "Task A")
+		let expB = expectation(description: "Task B")
+
 		queue.addOperation {
 			try await Task.sleep(milliseconds: 100)
 
 			expA.fulfill()
 		}
 
-		let expB = expectation(description: "Task B")
 		queue.addOperation {
 			expB.fulfill()
 		}
@@ -85,7 +86,7 @@ final class QueueTests: XCTestCase {
 		await fulfillment(of: [expB, expA], enforceOrder: true)
 	}
 
-	func testSingleBarrierOperation() async {
+	func testTaskWaitsForPreceedingBarrier() async {
 		let queue = AsyncQueue(attributes: [.concurrent])
 
 		let expA = expectation(description: "Task A")
@@ -107,20 +108,21 @@ final class QueueTests: XCTestCase {
 		let queue = AsyncQueue(attributes: [.concurrent])
 
 		let expA = expectation(description: "Task A")
+		let expB = expectation(description: "Task B")
+		let expC = expectation(description: "Task C")
+
 		queue.addBarrierOperation {
 			try await Task.sleep(milliseconds: 100)
 
 			expA.fulfill()
 		}
 
-		let expB = expectation(description: "Task B")
 		queue.addOperation {
 			try await Task.sleep(milliseconds: 100)
 
 			expB.fulfill()
 		}
 
-		let expC = expectation(description: "Task C")
 		queue.addOperation {
 			expC.fulfill()
 		}
@@ -128,7 +130,7 @@ final class QueueTests: XCTestCase {
 		await fulfillment(of: [expA, expC, expB], enforceOrder: true)
 	}
 
-	func testBarrierThatAddsBarrierThenTask() async {
+	func testAddBarrierWhileBarrierRunning() async {
 		let queue = AsyncQueue(attributes: [.concurrent])
 
 		let expA = expectation(description: "Task A")
@@ -141,6 +143,8 @@ final class QueueTests: XCTestCase {
 				expB.fulfill()
 			}
 
+			try await Task.sleep(milliseconds: 100)
+
 			expA.fulfill()
 		}
 
@@ -151,7 +155,7 @@ final class QueueTests: XCTestCase {
 		await fulfillment(of: [expA, expC, expB], enforceOrder: true)
 	}
 
-	func testBarrierThatAddsBarrierAndTask() async {
+	func testAddBarrierWhileBarrierRunningBlocksSubsequenceTasks() async {
 		let queue = AsyncQueue(attributes: [.concurrent])
 
 		let expA = expectation(description: "Task A")
@@ -168,9 +172,31 @@ final class QueueTests: XCTestCase {
 				expC.fulfill()
 			}
 
+			try await Task.sleep(milliseconds: 100)
+
 			expA.fulfill()
 		}
 
 		await fulfillment(of: [expA, expB, expC], enforceOrder: true)
+	}
+
+	func testBarrierWaitsForAllTasksBeforeRunning() async {
+		let queue = AsyncQueue(attributes: [.concurrent])
+
+		let expA = expectation(description: "Task A")
+		let expB = expectation(description: "Task B")
+
+		queue.addOperation {
+			// slow, non-barrier
+			try await Task.sleep(milliseconds: 100)
+
+			expA.fulfill()
+		}
+
+		queue.addBarrierOperation {
+			expB.fulfill()
+		}
+
+		await fulfillment(of: [expA, expB], enforceOrder: true)
 	}
 }

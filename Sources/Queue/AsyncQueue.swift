@@ -50,6 +50,14 @@ public final class AsyncQueue: @unchecked Sendable {
 		pendingTasks[props.id] = nil
 	}
 
+	private var allPendingTasks: [any Awaitable] {
+		pendingTasks.values.map({ $0.awaitable })
+	}
+
+	private var barriers: [any Awaitable] {
+		pendingTasks.values.filter({ $0.isBarrier }).map({ $0.awaitable })
+	}
+
 	private func createTask<Success, Failure>(
 		barrier: Bool,
 		_ block: (ExecutionProperties) -> Task<Success, Failure>
@@ -61,8 +69,10 @@ public final class AsyncQueue: @unchecked Sendable {
 
 		precondition(pendingTasks[id] == nil)
 
-		// we have dependencies on all pending barrier tasks
-		let dependencies = pendingTasks.values.filter { $0.isBarrier }.map({ $0.awaitable })
+		// if we are a barrier, we have to wait for all existing tasks.
+		// othewise, we really only need to wait for the latest barrier, but
+		// since *that* has to wait for all tasks, this should be equivalent.
+		let dependencies = barrier ? allPendingTasks : barriers
 
 		let props = ExecutionProperties(dependencies: dependencies, isBarrier: barrier, id: id)
 		let task = block(props)
