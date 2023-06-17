@@ -72,8 +72,7 @@ final class QueueTests: XCTestCase {
 
 		let expA = expectation(description: "Task A")
 		queue.addOperation {
-//			try await Task.sleep(nanoseconds: )
-			try await Task.sleep(for: .milliseconds(100))
+			try await Task.sleep(milliseconds: 100)
 
 			expA.fulfill()
 		}
