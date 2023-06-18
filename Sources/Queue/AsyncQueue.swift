@@ -111,8 +111,8 @@ extension AsyncQueue {
 		let serial = attributes.contains([.concurrent]) == false
 
 		return createTask(barrier: serial) { props in
-			Task<Success, Error>(priority: priority) { [unowned self] in
-				try await self.executeOperation(props: props, operation: operation)
+			Task<Success, Error>(priority: priority) {
+				try await executeOperation(props: props, operation: operation)
 			}
 		}
 	}
@@ -126,8 +126,8 @@ extension AsyncQueue {
 		let serial = attributes.contains([.concurrent]) == false
 
 		return createTask(barrier: serial) { props in
-			Task<Success, Never>(priority: priority) { [unowned self] in
-				await self.executeOperation(props: props, operation: operation)
+			Task<Success, Never>(priority: priority) {
+				await executeOperation(props: props, operation: operation)
 			}
 		}
 	}
@@ -141,7 +141,7 @@ extension AsyncQueue {
 		@_inheritActorContext operation: @escaping @Sendable () async throws -> Success)
 	-> Task<Success, Error> where Success : Sendable {
 		return createTask(barrier: true) { props in
-			Task<Success, Error>(priority: priority) { [unowned self] in
+			Task<Success, Error>(priority: priority) {
 				try await executeOperation(props: props, operation: operation)
 			}
 		}
@@ -154,7 +154,7 @@ extension AsyncQueue {
 		@_inheritActorContext operation: @escaping @Sendable () async -> Success)
 	-> Task<Success, Never> where Success : Sendable {
 		return createTask(barrier: true) { props in
-			Task<Success, Never>(priority: priority) { [unowned self] in
+			Task<Success, Never>(priority: priority) {
 				await executeOperation(props: props, operation: operation)
 			}
 		}
