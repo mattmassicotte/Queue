@@ -199,4 +199,27 @@ final class QueueTests: XCTestCase {
 
 		await fulfillment(of: [expA, expB], enforceOrder: true)
 	}
+
+	func testCancelOperation() async throws {
+		let queue = AsyncQueue(attributes: [])
+
+		let expA = expectation(description: "Task A")
+		expA.isInverted = true
+
+		let expB = expectation(description: "Task B")
+
+		let task = queue.addOperation {
+			try await Task.sleep(milliseconds: 100)
+
+			expA.fulfill()
+		}
+
+		queue.addOperation {
+			expB.fulfill()
+		}
+
+		task.cancel()
+
+		await fulfillment(of: [expA, expB], timeout: 0.5, enforceOrder: true)
+	}
 }
