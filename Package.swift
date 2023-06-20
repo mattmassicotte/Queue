@@ -3,7 +3,7 @@
 import PackageDescription
 
 let settings: [SwiftSetting] = [
-	.unsafeFlags(["-Xfrontend", "-strict-concurrency=complete"])
+//	.unsafeFlags(["-Xfrontend", "-strict-concurrency=complete"])
 ]
 
 let package = Package(
