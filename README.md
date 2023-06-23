@@ -44,6 +44,18 @@ queue.addBarrierOperation {
 }
 ```
 
+The `AsyncQueue` type has an `errorSequence` property, which can be used to detect uncaught errors out of band.
+
+```swift
+let queue = AsyncQueue(attributes: [.publishErrors])
+
+Task {
+    for await error in queue.errorSequence {
+        print(error)
+    }
+}
+```
+
 This package was inspired by [Semaphore][semaphore], which is another concurrency-related synchronization system that I've found very useful.
 
 ## Contributing and Collaboration

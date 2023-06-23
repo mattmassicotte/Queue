@@ -7,7 +7,11 @@ extension Task where Success == Never, Failure == Never {
 	}
 }
 
-final class QueueTests: XCTestCase {
+enum QueueTestError: Error, Hashable {
+	case operatorFailure
+}
+
+final class AsyncQueueTests: XCTestCase {
 	func testSerialOrder() async {
 		let queue = AsyncQueue()
 
@@ -221,5 +225,50 @@ final class QueueTests: XCTestCase {
 		task.cancel()
 
 		await fulfillment(of: [expA, expB], timeout: 0.5, enforceOrder: true)
+	}
+}
+
+extension AsyncQueueTests {
+	func testPublishUncaughtErrors() async throws {
+		let queue = AsyncQueue(attributes: [.publishErrors])
+
+		var iterator = queue.errorSequence.makeAsyncIterator()
+
+		queue.addOperation {
+			throw QueueTestError.operatorFailure
+		}
+
+		let error = await iterator.next()
+
+		XCTAssertEqual(error as? QueueTestError, QueueTestError.operatorFailure)
+	}
+
+	func testCancelErrorsNoPublished() async throws {
+		let queue = AsyncQueue(attributes: [.publishErrors])
+
+		var iterator = queue.errorSequence.makeAsyncIterator()
+
+		let expA = expectation(description: "Cancelled Task")
+		expA.isInverted = true
+
+		let task = queue.addOperation {
+			try await Task.sleep(milliseconds: 100)
+
+			expA.fulfill()
+		}
+
+		task.cancel()
+
+		// we cannot yet wait, because there should be no errors in here
+		queue.addOperation {
+			throw QueueTestError.operatorFailure
+		}
+
+		await fulfillment(of: [expA], timeout: 0.5, enforceOrder: true)
+
+		let error = await iterator.next()
+
+		XCTAssertEqual(error as? QueueTestError, QueueTestError.operatorFailure)
+
 	}
 }
