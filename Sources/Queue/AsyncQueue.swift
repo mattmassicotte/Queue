@@ -11,9 +11,7 @@ extension Task: Awaitable {
 }
 
 public final class AsyncQueue: @unchecked Sendable {
-#if compiler(>=5.9)
 	public typealias ErrorSequence = AsyncStream<Error>
-#endif
 
 	public struct Attributes: OptionSet, Sendable {
 		public let rawValue: UInt64
@@ -41,14 +39,12 @@ public final class AsyncQueue: @unchecked Sendable {
 	private let lock = NSLock()
 	private var pendingTasks = [UUID: QueueEntry]()
 	private let attributes: Attributes
-#if compiler(>=5.9)
 	private let errorContinuation: ErrorSequence.Continuation
 
 	/// An AsyncSequence of all errors thrown from operations.
 	///
 	/// Errors are published here even if a reference to the operation task is held and awaited. But, it can still very useful for logging and debugging purposes. This sequence will not include any `CancellationError`s thrown.
 	public let errorSequence: ErrorSequence
-#endif
 
 	public init(attributes: Attributes = []) {
 		self.attributes = attributes
@@ -56,6 +52,12 @@ public final class AsyncQueue: @unchecked Sendable {
 
 #if compiler(>=5.9)
 		(self.errorSequence, self.errorContinuation) = ErrorSequence.makeStream()
+#else
+		var escapedContinuation: ErrorSequence.Continuation?
+
+		self.errorSequence = ErrorSequence { escapedContinuation = $0 }
+
+		self.errorContinuation = escapedContinuation!
 #endif
 	}
 

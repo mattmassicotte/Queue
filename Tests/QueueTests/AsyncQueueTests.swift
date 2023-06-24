@@ -228,7 +228,6 @@ final class AsyncQueueTests: XCTestCase {
 	}
 }
 
-#if compiler(>=5.9)
 extension AsyncQueueTests {
 	func testPublishUncaughtErrors() async throws {
 		let queue = AsyncQueue(attributes: [.publishErrors])
@@ -273,4 +272,3 @@ extension AsyncQueueTests {
 
 	}
 }
-#endif
