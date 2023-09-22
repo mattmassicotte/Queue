@@ -7,10 +7,11 @@ on:
     paths-ignore:
       - 'README.md'
       - 'CODE_OF_CONDUCT.md'
+      - '.editorconfig'
+      - '.spi.yml'
   pull_request:
     branches:
       - main
-
 
 env:
   DEVELOPER_DIR: /Applications/Xcode_15.0.app/Contents/Developer
@@ -27,5 +28,20 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+      - name: Install XCBeautify
+        run: brew install xcbeautify
       - name: Test platform ${{ matrix.destination }}
-        run: set -o pipefail && xcodebuild -scheme Queue -destination "${{ matrix.destination }}" test | xcpretty
+        run: set -o pipefail && xcodebuild -scheme Queue -destination "${{ matrix.destination }}" test | xcbeautify --renderer github-actions
+
+  linux_test:
+    name: Test Linux
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Install swiftly
+        run: curl -L https://swift-server.github.io/swiftly/swiftly-install.sh | bash -s -- -y
+      - name: Install the latest Swift toolchain
+        run: swiftly install latest
+      - name: Test
+        run: swift test
