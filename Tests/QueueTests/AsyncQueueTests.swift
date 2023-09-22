@@ -3,7 +3,7 @@ import Queue
 
 extension Task where Success == Never, Failure == Never {
 	static func sleep(milliseconds: UInt64) async throws {
-		try await sleep(nanoseconds: milliseconds * NSEC_PER_MSEC)
+		try await sleep(for: .milliseconds(milliseconds))
 	}
 }
 
