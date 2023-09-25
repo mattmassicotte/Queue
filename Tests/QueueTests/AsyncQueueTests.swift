@@ -5,6 +5,14 @@ enum QueueTestError: Error, Hashable {
 	case operatorFailure
 }
 
+actor Counter {
+	var count: Int = 0
+	func increment() -> Int {
+		count += 1
+		return count
+	}
+}
+
 final class AsyncQueueTests: XCTestCase {
 	func testSerialOrder() async {
 		let queue = AsyncQueue()
@@ -263,6 +271,23 @@ extension AsyncQueueTests {
 		let error = await iterator.next()
 
 		XCTAssertEqual(error as? QueueTestError, QueueTestError.operatorFailure)
+	}
 
+	func testEnqueuePerformance() {
+		let queue = AsyncQueue()
+
+		measure {
+			// techincally measuring the actor creation time too, but I don't think that is a big deal
+			let s = Counter()
+
+			for i in 1 ... 1_000 {
+				queue.addOperation { [i] in
+					let result = await s.increment()
+					if i != result {
+						print(i, "does not match", result)
+					}
+				}
+			}
+		}
 	}
 }
