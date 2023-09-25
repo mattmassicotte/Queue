@@ -37,7 +37,7 @@ public final class AsyncQueue: @unchecked Sendable {
 	}
 
 	private let lock = NSLock()
-	private var pendingTasks = [UUID: QueueEntry]()
+	private var pendingTasks = [QueueEntry]()
 	private let attributes: Attributes
 	private let errorContinuation: ErrorSequence.Continuation
 
@@ -65,16 +65,11 @@ public final class AsyncQueue: @unchecked Sendable {
 		lock.lock()
 		defer { lock.unlock() }
 
-		precondition(pendingTasks[props.id] != nil)
-		pendingTasks[props.id] = nil
-	}
+		guard let idx = pendingTasks.firstIndex(where: { $0.id == props.id }) else {
+			preconditionFailure("Pending task id not found for \(props)")
+		}
 
-	private var allPendingTasks: [any Awaitable] {
-		pendingTasks.values.map({ $0.awaitable })
-	}
-
-	private var barriers: [any Awaitable] {
-		pendingTasks.values.filter({ $0.isBarrier }).map({ $0.awaitable })
+		pendingTasks.remove(at: idx)
 	}
 
 	private func createTask<Success, Failure>(
@@ -86,20 +81,31 @@ public final class AsyncQueue: @unchecked Sendable {
 		lock.lock()
 		defer { lock.unlock() }
 
-		precondition(pendingTasks[id] == nil)
+		let dependencies: [any Awaitable]
 
-		// if we are a barrier, we have to wait for all existing tasks.
-		// othewise, we really only need to wait for the latest barrier, but
-		// since *that* has to wait for all tasks, this should be equivalent.
-		let dependencies = barrier ? allPendingTasks : barriers
+		switch (barrier, attributes.contains(.concurrent)) {
+		case (_, false):
+			// this is the simple case of a plain ol' serial queue. Everything is a barrier.
+			dependencies = pendingTasks.last.flatMap { [$0.awaitable] } ?? []
+		case (false, true):
+			// we must wait on the most-recently enqueued barrier
+			let lastBarrier = pendingTasks.last(where: { $0.isBarrier })
+
+			dependencies = lastBarrier.flatMap({ [$0.awaitable] }) ?? []
+		case (true, true):
+			// the trickiest case: wait for *all* tasks until the last barrier
+
+			let idx = pendingTasks.lastIndex(where: { $0.isBarrier }) ?? pendingTasks.startIndex
+
+			dependencies = pendingTasks.suffix(from: idx).map({ $0.awaitable })
+		}
 
 		let props = ExecutionProperties(dependencies: dependencies, isBarrier: barrier, id: id)
 		let task = block(props)
 
 		let entry = QueueEntry(awaitable: task, isBarrier: barrier, id: id)
 
-		precondition(pendingTasks[id] == nil)
-		pendingTasks[id] = entry
+		pendingTasks.append(entry)
 
 		return task
 	}
