@@ -57,6 +57,10 @@ Task {
 
 This package was inspired by [Semaphore][semaphore], which is another concurrency-related synchronization system that I've found very useful.
 
+## Alternatives
+
+- (swift-async-queue)[https://github.com/dfed/swift-async-queue]
+
 ## Contributing and Collaboration
 
 I'd love to hear from you! Get in touch via [mastodon](https://mastodon.social/@mattiem), an issue, or a pull request.
