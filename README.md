@@ -69,7 +69,7 @@ This package was inspired by [Semaphore][semaphore], which is another concurrenc
 
 ## Alternatives
 
-- (swift-async-queue)[https://github.com/dfed/swift-async-queue]
+- [swift-async-queue](https://github.com/dfed/swift-async-queue)
 
 ## Contributing and Collaboration
 
