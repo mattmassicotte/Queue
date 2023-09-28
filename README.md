@@ -10,6 +10,16 @@ This package exposes a single type: `AsyncQueue`. Conceptually, `AsyncQueue` is 
 
 I've found this helpful when interfacing stateful asynchronous systems with synchronous code.
 
+## Integration
+
+```swift
+dependencies: [
+    .package(url: "https://github.com/mattmassicotte/AsyncQueue", from: "0.1.4")
+]
+```
+
+## Usage
+
 ```swift
 let queue = AsyncQueue()
 
