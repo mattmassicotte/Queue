@@ -14,7 +14,7 @@ I've found this helpful when interfacing stateful asynchronous systems with sync
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/mattmassicotte/AsyncQueue", from: "0.1.4")
+    .package(url: "https://github.com/mattmassicotte/Queue", from: "0.1.4")
 ]
 ```
 
