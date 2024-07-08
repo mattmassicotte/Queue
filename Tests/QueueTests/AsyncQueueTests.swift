@@ -13,6 +13,10 @@ actor Counter {
 	}
 }
 
+func delay(milliseconds: UInt64) async throws  {
+	try await Task.sleep(nanoseconds: milliseconds * 1_000_000)
+}
+
 final class AsyncQueueTests: XCTestCase {
 	func testSerialOrder() async {
 		let queue = AsyncQueue()
@@ -80,7 +84,7 @@ final class AsyncQueueTests: XCTestCase {
 		let expB = expectation(description: "Task B")
 
 		queue.addOperation {
-			try await Task.sleep(for: .milliseconds(100))
+			try await delay(milliseconds: 100)
 
 			expA.fulfill()
 		}
@@ -97,7 +101,7 @@ final class AsyncQueueTests: XCTestCase {
 
 		let expA = expectation(description: "Task A")
 		queue.addBarrierOperation {
-			try await Task.sleep(for: .milliseconds(100))
+			try await delay(milliseconds: 100)
 
 			expA.fulfill()
 		}
@@ -118,13 +122,13 @@ final class AsyncQueueTests: XCTestCase {
 		let expC = expectation(description: "Task C")
 
 		queue.addBarrierOperation {
-			try await Task.sleep(for: .milliseconds(100))
+			try await delay(milliseconds: 100)
 
 			expA.fulfill()
 		}
 
 		queue.addOperation {
-			try await Task.sleep(for: .milliseconds(100))
+			try await delay(milliseconds: 100)
 
 			expB.fulfill()
 		}
@@ -145,11 +149,11 @@ final class AsyncQueueTests: XCTestCase {
 
 		queue.addBarrierOperation {
 			queue.addBarrierOperation {
-				try await Task.sleep(for: .milliseconds(100))
+				try await delay(milliseconds: 100)
 				expB.fulfill()
 			}
 
-			try await Task.sleep(for: .milliseconds(100))
+			try await delay(milliseconds: 100)
 
 			expA.fulfill()
 		}
@@ -170,7 +174,7 @@ final class AsyncQueueTests: XCTestCase {
 
 		queue.addBarrierOperation {
 			queue.addBarrierOperation {
-				try await Task.sleep(for: .milliseconds(100))
+				try await delay(milliseconds: 100)
 				expB.fulfill()
 			}
 
@@ -178,7 +182,7 @@ final class AsyncQueueTests: XCTestCase {
 				expC.fulfill()
 			}
 
-			try await Task.sleep(for: .milliseconds(100))
+			try await delay(milliseconds: 100)
 
 			expA.fulfill()
 		}
@@ -194,7 +198,7 @@ final class AsyncQueueTests: XCTestCase {
 
 		queue.addOperation {
 			// slow, non-barrier
-			try await Task.sleep(for: .milliseconds(100))
+			try await delay(milliseconds: 100)
 
 			expA.fulfill()
 		}
@@ -215,7 +219,7 @@ final class AsyncQueueTests: XCTestCase {
 		let expB = expectation(description: "Task B")
 
 		let task = queue.addOperation {
-			try await Task.sleep(for: .milliseconds(100))
+			try await delay(milliseconds: 100)
 
 			expA.fulfill()
 		}
@@ -254,7 +258,7 @@ extension AsyncQueueTests {
 		expA.isInverted = true
 
 		let task = queue.addOperation {
-			try await Task.sleep(for: .milliseconds(100))
+			try await delay(milliseconds: 100)
 
 			expA.fulfill()
 		}

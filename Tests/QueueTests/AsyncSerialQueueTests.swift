@@ -1,6 +1,10 @@
 import XCTest
 @testable import Queue
 
+enum AsyncSerialQueueError: Error {
+	case problem
+}
+
 final class AsyncSerialQueueTests: XCTestCase {
 
 	func testEnqueuePerformance() {
@@ -18,6 +22,14 @@ final class AsyncSerialQueueTests: XCTestCase {
 					}
 				}
 			}
+		}
+	}
+
+	func testThrowingOperation() {
+		let queue = AsyncSerialQueue()
+
+		queue.addOperation {
+			throw AsyncSerialQueueError.problem
 		}
 	}
 }
