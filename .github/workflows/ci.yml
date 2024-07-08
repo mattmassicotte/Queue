@@ -13,25 +13,27 @@ on:
     branches:
       - main
 
-env:
-  DEVELOPER_DIR: /Applications/Xcode_15.0.app/Contents/Developer
 
 jobs:
   test:
     name: Test
-    runs-on: macOS-13
+    timeout-minutes: 30
+    runs-on: macOS-14
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_15.3.app/Contents/Developer
     strategy:
       matrix:
         destination:
           - "platform=macOS"
-          - "platform=iOS Simulator,name=iPhone 12"
+          - "platform=iOS Simulator,name=iPhone 15"
+          - "platform=tvOS Simulator,name=Apple TV"
+          - "platform=watchOS Simulator,name=Apple Watch Series 6 (40mm)"
+          - "platform=macOS,variant=Mac Catalyst"
 
     steps:
       - uses: actions/checkout@v4
-      - name: Install XCBeautify
-        run: brew install xcbeautify
       - name: Test platform ${{ matrix.destination }}
-        run: set -o pipefail && xcodebuild -scheme Queue -destination "${{ matrix.destination }}" test | xcbeautify --renderer github-actions
+        run: set -o pipefail && xcodebuild -scheme Queue -destination "${{ matrix.destination }}" test | xcbeautify
 
   linux_test:
     name: Test Linux
