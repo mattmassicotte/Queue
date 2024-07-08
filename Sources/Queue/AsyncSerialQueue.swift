@@ -2,11 +2,18 @@
 ///
 /// This type is an experiment. I believe it works, but it currently has no tests and has been used very little.
 actor AsyncSerialQueue {
+#if compiler(>=6.0)
+	public typealias Operation<Failure> = @isolated(any) @Sendable () async throws(Failure) -> Void
+#else
+	public typealias Operation<Failure> = @Sendable () async throws -> Void
+	public typealias NonThrowingOperation = @Sendable () async -> Void
+#endif
+
 	public actor QueueTask {
 		var cancelled = false
-		let operation: @Sendable () async throws -> Void
+		let operation: Operation<any Error>
 
-		init(operation: @escaping @Sendable () async throws -> Void) {
+		init(operation: @escaping Operation<any Error>) {
 			self.operation = operation
 		}
 
@@ -50,7 +57,7 @@ actor AsyncSerialQueue {
 	/// Submit a throwing operation to the queue.
 	@discardableResult
 	public nonisolated func addOperation(
-		@_inheritActorContext operation: @escaping @Sendable () async throws -> Void
+		@_inheritActorContext operation: @escaping Operation<any Error>
 	) -> QueueTask {
 		let queueTask = QueueTask(operation: operation)
 
@@ -59,10 +66,11 @@ actor AsyncSerialQueue {
 		return queueTask
 	}
 
+#if compiler(<6.0)
 	/// Submit an operation to the queue.
 	@discardableResult
 	public nonisolated func addOperation(
-		@_inheritActorContext operation: @escaping @Sendable () async -> Void
+		@_inheritActorContext operation: @escaping NonThrowingOperation
 	) -> QueueTask {
 		let queueTask = QueueTask(operation: operation)
 
@@ -70,4 +78,5 @@ actor AsyncSerialQueue {
 
 		return queueTask
 	}
+#endif
 }

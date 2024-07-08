@@ -11,6 +11,14 @@ extension Task: Awaitable {
 }
 
 public final class AsyncQueue: @unchecked Sendable {
+#if compiler(>=6.0)
+	public typealias ThrowingOperation<Success> = @isolated(any) @Sendable () async throws -> sending Success
+	public typealias Operation<Success> = @isolated(any) @Sendable () async -> sending Success
+#else
+	public typealias ThrowingOperation<Success: Sendable> = @Sendable () async throws -> Success
+	public typealias Operation<Success: Sendable> = @Sendable () async -> Success
+#endif
+
 	public typealias ErrorSequence = AsyncStream<Error>
 
 	public struct Attributes: OptionSet, Sendable {
@@ -50,15 +58,7 @@ public final class AsyncQueue: @unchecked Sendable {
 		self.attributes = attributes
 		self.lock.name = "AsyncQueue"
 
-#if compiler(>=5.9)
 		(self.errorSequence, self.errorContinuation) = ErrorSequence.makeStream()
-#else
-		var escapedContinuation: ErrorSequence.Continuation?
-
-		self.errorSequence = ErrorSequence { escapedContinuation = $0 }
-
-		self.errorContinuation = escapedContinuation!
-#endif
 	}
 
 	private func completePendingTask(with props: ExecutionProperties) {
@@ -112,7 +112,7 @@ public final class AsyncQueue: @unchecked Sendable {
 
 	private func executeOperation<Success>(
 		props: ExecutionProperties,
-		@_inheritActorContext operation: @escaping @Sendable () async throws -> Success
+		@_inheritActorContext operation: @escaping ThrowingOperation<Success>
 	) async rethrows -> Success {
 		for awaitable in props.dependencies {
 			await awaitable.waitForCompletion()
@@ -144,8 +144,8 @@ extension AsyncQueue {
 	public func addOperation<Success>(
 		priority: TaskPriority? = nil,
 		barrier: Bool = false,
-		@_inheritActorContext operation: @escaping @Sendable () async throws -> Success
-	) -> Task<Success, Error> where Success : Sendable {
+		@_inheritActorContext operation: @escaping ThrowingOperation<Success>
+	) -> Task<Success, Error> {
 		let asBarrier = barrier || attributes.contains([.concurrent]) == false
 
 		return createTask(barrier: asBarrier) { props in
@@ -160,8 +160,8 @@ extension AsyncQueue {
 	public func addOperation<Success>(
 		priority: TaskPriority? = nil,
 		barrier: Bool = false,
-		@_inheritActorContext operation: @escaping @Sendable () async -> Success
-	) -> Task<Success, Never> where Success : Sendable {
+		@_inheritActorContext operation: @escaping Operation<Success>
+	) -> Task<Success, Never> {
 		let asBarrier = barrier || attributes.contains([.concurrent]) == false
 
 		return createTask(barrier: asBarrier) { props in
@@ -177,8 +177,8 @@ extension AsyncQueue {
 	@discardableResult
 	public func addBarrierOperation<Success>(
 		priority: TaskPriority? = nil,
-		@_inheritActorContext operation: @escaping @Sendable () async throws -> Success)
-	-> Task<Success, Error> where Success : Sendable {
+		@_inheritActorContext operation: @escaping ThrowingOperation<Success>
+	) -> Task<Success, Error> where Success : Sendable {
 		return addOperation(priority: priority, barrier: true, operation: operation)
 	}
 
@@ -186,8 +186,8 @@ extension AsyncQueue {
 	@discardableResult
 	public func addBarrierOperation<Success>(
 		priority: TaskPriority? = nil,
-		@_inheritActorContext operation: @escaping @Sendable () async -> Success)
-	-> Task<Success, Never> where Success : Sendable {
+		@_inheritActorContext operation: @escaping Operation<Success>
+	) -> Task<Success, Never> where Success : Sendable {
 		return addOperation(priority: priority, barrier: true, operation: operation)
 	}
 }
