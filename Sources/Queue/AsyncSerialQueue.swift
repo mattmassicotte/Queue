@@ -1,4 +1,4 @@
-/// A esrial queue implemented on top of AsyncSequence.
+/// A serial queue implemented on top of AsyncSequence.
 ///
 /// This type is an experiment. I believe it works, but it currently has no tests and has been used very little.
 actor AsyncSerialQueue {
