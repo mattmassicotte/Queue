@@ -22,7 +22,6 @@ let package = Package(
 
 let swiftSettings: [SwiftSetting] = [
 	.enableExperimentalFeature("StrictConcurrency"),
-	.enableExperimentalFeature("IsolatedAny"),
 ]
 
 for target in package.targets {

@@ -2,20 +2,21 @@
 ///
 /// This type is an experiment. I believe it works, but it currently has no tests and has been used very little.
 actor AsyncSerialQueue {
-#if compiler(>=6.0)
-	public typealias Operation<Failure> = @isolated(any) @Sendable () async throws(Failure) -> Void
-#else
-	public typealias Operation<Failure> = @Sendable () async throws -> Void
-	public typealias NonThrowingOperation = @Sendable () async -> Void
-#endif
-
 	public actor QueueTask {
 		var cancelled = false
-		let operation: Operation<any Error>
+#if compiler(>=6.0)
+		let operation: @isolated(any) () async throws -> Void
 
-		init(operation: @escaping Operation<any Error>) {
+		init(operation: @escaping @isolated(any) () async throws -> Void) {
 			self.operation = operation
 		}
+#else
+		let operation: @Sendable () async throws -> Void
+
+		init(operation: @escaping @Sendable () async throws -> Void) {
+			self.operation = operation
+		}
+#endif
 
 		public nonisolated func cancel() {
 			Task { await internalCancel() }
@@ -54,10 +55,11 @@ actor AsyncSerialQueue {
 		continuation.finish()
 	}
 
+#if compiler(<6.0)
 	/// Submit a throwing operation to the queue.
 	@discardableResult
 	public nonisolated func addOperation(
-		@_inheritActorContext operation: @escaping Operation<any Error>
+		@_inheritActorContext operation: @escaping @Sendable () async throws -> Void
 	) -> QueueTask {
 		let queueTask = QueueTask(operation: operation)
 
@@ -66,11 +68,22 @@ actor AsyncSerialQueue {
 		return queueTask
 	}
 
-#if compiler(<6.0)
 	/// Submit an operation to the queue.
 	@discardableResult
 	public nonisolated func addOperation(
-		@_inheritActorContext operation: @escaping NonThrowingOperation
+		@_inheritActorContext operation: @escaping @Sendable () async -> Void
+	) -> QueueTask {
+		let queueTask = QueueTask(operation: operation)
+
+		continuation.yield(queueTask)
+
+		return queueTask
+	}
+#else
+	/// Submit an operation to the queue.
+	@discardableResult
+	public nonisolated func addOperation<Failure>(
+		@_inheritActorContext operation: sending @escaping @isolated(any) () async throws(Failure) -> Void
 	) -> QueueTask {
 		let queueTask = QueueTask(operation: operation)
 
