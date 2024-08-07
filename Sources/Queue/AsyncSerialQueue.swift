@@ -2,21 +2,19 @@
 ///
 /// This type is an experiment. I believe it works, but it currently has no tests and has been used very little.
 actor AsyncSerialQueue {
+#if compiler(>=6.0)
+	typealias Operation = @isolated(any) () async throws -> Void
+#else
+	typealias Operation = @Sendable () async throws -> Void
+#endif
+
 	public actor QueueTask {
 		var cancelled = false
-#if compiler(>=6.0)
-		let operation: @isolated(any) () async throws -> Void
+		let operation: Operation
 
-		init(operation: @escaping @isolated(any) () async throws -> Void) {
+		init(operation: @escaping Operation) {
 			self.operation = operation
 		}
-#else
-		let operation: @Sendable () async throws -> Void
-
-		init(operation: @escaping @Sendable () async throws -> Void) {
-			self.operation = operation
-		}
-#endif
 
 		public nonisolated func cancel() {
 			Task { await internalCancel() }
@@ -59,7 +57,7 @@ actor AsyncSerialQueue {
 	/// Submit a throwing operation to the queue.
 	@discardableResult
 	public nonisolated func addOperation(
-		@_inheritActorContext operation: @escaping @Sendable () async throws -> Void
+		@_inheritActorContext operation: @escaping Operation
 	) -> QueueTask {
 		let queueTask = QueueTask(operation: operation)
 
