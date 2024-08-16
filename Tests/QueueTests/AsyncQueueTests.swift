@@ -294,4 +294,38 @@ extension AsyncQueueTests {
 			}
 		}
 	}
+
+	func testPriorityInversionAvoidance() async throws {
+		let queue = AsyncQueue(attributes: [.concurrent])
+
+		let exp = expectation(description: "low priority task executed")
+
+		queue.addOperation(priority: .low) {
+			try await delay(milliseconds: 100)
+
+			XCTAssertTrue(Task.currentPriority >= .high)
+			exp.fulfill()
+		}
+
+		let task = queue.addOperation(priority: .high, barrier: true) {
+			XCTAssertTrue(Task.currentPriority >= .high)
+		}
+
+		await task.value
+		await fulfillment(of: [exp], timeout: 1.0)
+	}
+
+	func testLowPriority() async throws {
+		let queue = AsyncQueue(attributes: [.concurrent])
+
+		let exp = expectation(description: "low priority task executed")
+
+		queue.addOperation(priority: .low) {
+			XCTAssertTrue(Task.currentPriority == .low)
+
+			exp.fulfill()
+		}
+
+		await fulfillment(of: [exp], timeout: 1.0)
+	}
 }
