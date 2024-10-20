@@ -5,7 +5,7 @@ fileprivate protocol Awaitable: Sendable {
 }
 
 extension Task: Awaitable {
-	func waitForCompletion() async {
+	fileprivate func waitForCompletion() async {
 		_ = try? await value
 	}
 }
