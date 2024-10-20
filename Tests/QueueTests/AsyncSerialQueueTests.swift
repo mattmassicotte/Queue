@@ -32,4 +32,16 @@ final class AsyncSerialQueueTests: XCTestCase {
 			throw AsyncSerialQueueError.problem
 		}
 	}
+
+	func testNonThrowingOperation() async {
+		let queue = AsyncSerialQueue()
+
+		let exp = expectation(description: "executed")
+
+		queue.addOperation {
+			exp.fulfill()
+		}
+
+		await fulfillment(of: [exp], timeout: 1.0)
+	}
 }
