@@ -1,6 +1,6 @@
 /// A serial queue implemented on top of AsyncSequence.
 ///
-/// This type is an experiment. I believe it works, but it currently has no tests and has been used very little.
+/// This type is an experiment. I believe it works, but it currently has very few tests and has been used very little.
 actor AsyncSerialQueue {
 #if compiler(>=6.0)
 	typealias Operation = @isolated(any) () async throws -> Void
