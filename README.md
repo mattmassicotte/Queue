@@ -15,7 +15,7 @@ This package exposes a single type: `AsyncQueue`. Conceptually, `AsyncQueue` is 
 
 I've found this helpful when interfacing stateful asynchronous systems with synchronous code.
 
-If you are looking for help handling actor reentrancy, check out [Lock][https://github.com/mattmassicotte/Lock] and [Semaphore][semaphore].
+If you are looking for help handling actor reentrancy, check out [Lock](https://github.com/mattmassicotte/Lock) and [Semaphore][semaphore].
 
 ## Integration
 
