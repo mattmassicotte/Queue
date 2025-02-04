@@ -328,4 +328,72 @@ extension AsyncQueueTests {
 
 		await fulfillment(of: [exp], timeout: 1.0)
 	}
+
+	func testCancelPendingTasks() async throws {
+		let queue = AsyncQueue()
+		let expQuick = expectation(description: "Quick task finished")
+		let expCancelled = expectation(description: "Long task cancelled")
+		
+		// A task that completes quickly.
+		let taskQuick = queue.addOperation {
+			expQuick.fulfill()
+			return "quick"
+		}
+		
+		// A long-running task that should be cancelled.
+		let taskLong = queue.addOperation {
+			try await delay(milliseconds: 5_000)
+			return "long"
+		}
+		
+		await fulfillment(of: [expQuick], timeout: 1.0)
+		
+		// Cancel all pending tasks in the queue.
+		queue.cancelAllPendingTasks()
+
+		let quickResult = await taskQuick.value
+		XCTAssertEqual(quickResult, "quick")
+		
+		do {
+			_ = try await taskLong.value
+			XCTFail("Expected CancellationError, but taskLong completed successfully")
+		} catch is CancellationError {
+			expCancelled.fulfill()
+		}
+		
+		await fulfillment(of: [expCancelled], timeout: 1.0)
+	}
+	
+	func testCancelDoesNotAffectNewOperations() async throws {
+		let queue = AsyncQueue(attributes: [.concurrent])
+		let expCancelled = expectation(description: "Cancelled task threw CancellationError")
+		let expNew = expectation(description: "New task executed normally")
+		
+		// Schedule a long-running task that will be cancelled.
+		let taskCancelled = queue.addOperation {
+			try await delay(milliseconds: 5_000)
+			return "cancelled"
+		}
+		
+		// Cancel pending tasks.
+		queue.cancelAllPendingTasks()
+
+		do {
+			_ = try await taskCancelled.value
+			XCTFail("Expected CancellationError for taskCancelled")
+		} catch is CancellationError {
+			expCancelled.fulfill()
+		}
+		
+		// Schedule a new task after cancellation; it should run normally.
+		let taskNew = queue.addOperation {
+			expNew.fulfill()
+			return "new"
+		}
+		
+		let newResult = await taskNew.value
+		XCTAssertEqual(newResult, "new")
+		
+		await fulfillment(of: [expCancelled, expNew], timeout: 1.0)
+	}
 }

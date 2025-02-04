@@ -1,10 +1,15 @@
 import Foundation
+import Combine
+
+fileprivate protocol Cancellable {
+	func cancel()
+}
 
 fileprivate protocol Awaitable: Sendable {
 	func waitForCompletion() async
 }
 
-extension Task: Awaitable {
+extension Task: Awaitable, Cancellable {
 	fileprivate func waitForCompletion() async {
 		_ = try? await value
 	}
@@ -33,7 +38,7 @@ public final class AsyncQueue: @unchecked Sendable {
 	}
 
 	private struct QueueEntry {
-		let awaitable: any Awaitable
+		let task: any (Awaitable & Cancellable)
 		let isBarrier: Bool
 		let id: UUID
 	}
@@ -86,24 +91,24 @@ public final class AsyncQueue: @unchecked Sendable {
 		switch (barrier, attributes.contains(.concurrent)) {
 		case (_, false):
 			// this is the simple case of a plain ol' serial queue. Everything is a barrier.
-			dependencies = pendingTasks.last.flatMap { [$0.awaitable] } ?? []
+			dependencies = pendingTasks.last.flatMap { [$0.task] } ?? []
 		case (false, true):
 			// we must wait on the most-recently enqueued barrier
 			let lastBarrier = pendingTasks.last(where: { $0.isBarrier })
 
-			dependencies = lastBarrier.flatMap({ [$0.awaitable] }) ?? []
+			dependencies = lastBarrier.flatMap({ [$0.task] }) ?? []
 		case (true, true):
 			// the trickiest case: wait for *all* tasks until the last barrier
 
 			let idx = pendingTasks.lastIndex(where: { $0.isBarrier }) ?? pendingTasks.startIndex
 
-			dependencies = pendingTasks.suffix(from: idx).map({ $0.awaitable })
+			dependencies = pendingTasks.suffix(from: idx).map({ $0.task })
 		}
 
 		let props = ExecutionProperties(dependencies: dependencies, isBarrier: barrier, id: id)
 		let task = block(props)
 
-		let entry = QueueEntry(awaitable: task, isBarrier: barrier, id: id)
+		let entry = QueueEntry(task: task, isBarrier: barrier, id: id)
 
 		pendingTasks.append(entry)
 
@@ -189,5 +194,15 @@ extension AsyncQueue {
 		@_inheritActorContext operation: @escaping Operation<Success>
 	) -> Task<Success, Never> where Success : Sendable {
 		return addOperation(priority: priority, barrier: true, operation: operation)
+	}
+}
+
+extension AsyncQueue {
+	/// Cancel all pending tasks.
+	public func cancelAllPendingTasks() {
+		lock.lock()
+		defer { lock.unlock() }
+
+		pendingTasks.forEach { $0.task.cancel() }
 	}
 }
