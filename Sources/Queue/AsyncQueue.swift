@@ -1,5 +1,4 @@
 import Foundation
-import Combine
 
 fileprivate protocol Cancellable {
 	func cancel()
