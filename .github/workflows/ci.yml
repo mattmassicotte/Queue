@@ -42,7 +42,7 @@ jobs:
     timeout-minutes: 30
     runs-on: macOS-15
     env:
-      DEVELOPER_DIR: /Applications/Xcode_16.1.app
+      DEVELOPER_DIR: /Applications/Xcode_16.2.app
     strategy:
       matrix:
         destination:
@@ -59,13 +59,15 @@ jobs:
 
   linux_test:
     name: Test Linux
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Install swiftly
-        run: curl -L https://swiftlang.github.io/swiftly/swiftly-install.sh | bash -s -- -y
-      - name: Install the latest Swift toolchain
-        run: swiftly install latest
+      - name: Swiftly
+        uses: vapor/swiftly-action@v0.1.4
+        with:
+          toolchain: latest
       - name: Test
         run: swift test
+
