@@ -118,12 +118,12 @@ public final class AsyncQueue: @unchecked Sendable {
 		props: ExecutionProperties,
 		@_inheritActorContext operation: @escaping ThrowingOperation<Success>
 	) async rethrows -> Success {
-		for awaitable in props.dependencies {
-			await awaitable.waitForCompletion()
-		}
-
 		defer {
 			completePendingTask(with: props)
+		}
+
+		for awaitable in props.dependencies {
+			await awaitable.waitForCompletion()
 		}
 
 		do {
