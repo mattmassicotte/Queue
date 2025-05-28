@@ -19,7 +19,7 @@ concurrency:
 
 jobs:
   xcode15_test:
-    name: Test
+    name: Test Xcode 15
     timeout-minutes: 30
     runs-on: macOS-14
     env:
@@ -38,11 +38,11 @@ jobs:
         run: set -o pipefail && xcodebuild -scheme Queue -destination "${{ matrix.destination }}" test | xcbeautify
 
   xcode16_test:
-    name: Test
+    name: Test Xcode 16
     timeout-minutes: 30
     runs-on: macOS-15
     env:
-      DEVELOPER_DIR: /Applications/Xcode_16.2.app
+      DEVELOPER_DIR: /Applications/Xcode_16.3.app
     strategy:
       matrix:
         destination:
