@@ -59,15 +59,19 @@ jobs:
 
   linux_test:
     name: Test Linux
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     timeout-minutes: 30
+    strategy:
+      matrix:
+        swift-version:
+          - 6.0.3
+          - 6.1
     steps:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Swiftly
-        uses: vapor/swiftly-action@v0.1.4
+        uses: vapor/swiftly-action@v0.2.0
         with:
-          toolchain: latest
+          toolchain: ${{ matrix.swift-version }}
       - name: Test
         run: swift test
-
