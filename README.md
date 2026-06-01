@@ -15,13 +15,13 @@ This package exposes a single type: `AsyncQueue`. Conceptually, `AsyncQueue` is 
 
 I've found this helpful when interfacing stateful asynchronous systems with synchronous code.
 
-If you are looking for help handling actor reentrancy, check out [Lock](https://github.com/mattmassicotte/Lock) and [Semaphore][semaphore].
+If you are looking for help handling actor reentrancy, check out [TaskGate](https://github.com/mattmassicotte/TaskGate) and [Semaphore][semaphore].
 
 ## Integration
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/mattmassicotte/Queue", from: "0.2.0")
+    .package(url: "https://github.com/mattmassicotte/Queue", from: "0.2.2")
 ]
 ```
 
