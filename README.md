@@ -77,6 +77,7 @@ This package was inspired by [Semaphore][semaphore], which is another concurrenc
 ## Alternatives
 
 - [swift-async-queue](https://github.com/dfed/swift-async-queue)
+- [AsyncQueues](https://github.com/groue/AsyncQueues)
 
 ## Contributing and Collaboration
 
