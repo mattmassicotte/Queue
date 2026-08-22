@@ -3,13 +3,12 @@
 [![Build Status][build status badge]][build status]
 [![Platforms][platforms badge]][platforms]
 [![Documentation][documentation badge]][documentation]
-[![Matrix][matrix badge]][matrix]
 
 </div>
 
 # Queue
 
-> Originally authored by [Matt Massicotte](https://www.massicotte.org/). Maintained by [Dmitrii Kharlamov](https://dakharlamov.com) as of August 2026. Please consider [sponsoring the original author of this work - Matt Massicotte](https://github.com/sponsors/mattmassicotte).
+> Originally created by @mattmassicotte. Now maintained by @dimasusername.
 
 A queue for Swift concurrency
 
@@ -17,7 +16,7 @@ This package exposes a single type: `AsyncQueue`. Conceptually, `AsyncQueue` is 
 
 I've found this helpful when interfacing stateful asynchronous systems with synchronous code.
 
-If you are looking for help handling actor reentrancy, check out [TaskGate](https://github.com/mattmassicotte/TaskGate) and [Semaphore][semaphore].
+If you are looking for help handling actor reentrancy, check out [TaskGate](https://github.com/dimasusername/TaskGate) and [Semaphore][semaphore].
 
 ## Integration
 
@@ -83,7 +82,7 @@ This package was inspired by [Semaphore][semaphore], which is another concurrenc
 
 ## Contributing and Collaboration
 
-I would love to hear from you! Issues or pull requests work great. I have a strong bias towards answering in the form of documentation. You can find Matt [here](https://www.massicotte.org/about) and Dmitrii [here](https://dakharlamov.com). Original ChimeHQ [Matrix space][matrix] and [Discord][discord] remain online but please don't expect live help there as Matt is no longer a maintainer on this project.
+I would love to hear from you! Issues or pull requests work great. I have a strong bias towards answering in the form of documentation.
 
 I prefer collaboration, and would love to find ways to work together if you have a similar project.
 
@@ -94,10 +93,7 @@ By participating in this project you agree to abide by the [Contributor Code of 
 [build status]: https://github.com/dimasusername/Queue/actions
 [build status badge]: https://github.com/dimasusername/Queue/workflows/CI/badge.svg
 [platforms]: https://swiftpackageindex.com/dimasusername/Queue
-[platforms badge]: https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fmattmassicotte%2FQueue%2Fbadge%3Ftype%3Dplatforms
-[documentation]: https://swiftpackageindex.com/mattmassicotte/Queue/main/documentation
+[platforms badge]: https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fdimasusername%2FQueue%2Fbadge%3Ftype%3Dplatforms
+[documentation]: https://swiftpackageindex.com/dimasusername/Queue/main/documentation
 [documentation badge]: https://img.shields.io/badge/Documentation-DocC-blue
-[matrix]: https://matrix.to/#/%23chimehq%3Amatrix.org
-[matrix badge]: https://img.shields.io/matrix/chimehq%3Amatrix.org?label=Matrix
-[discord]: https://discord.gg/esFpX6sErJ
 [semaphore]: https://github.com/groue/Semaphore
